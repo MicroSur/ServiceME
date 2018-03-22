@@ -70,7 +70,7 @@ __myevic__ void InitGPIO()
 
 
 	// BUCK/BOOST CONVERTER CONTROL LINES
-//        PC1 = 0;                                                                // 0x40004884
+        PC1 = 0;                                                                // 0x40004884
 //        GPIO_SetMode( PC, GPIO_PIN_PIN1_Msk, GPIO_MODE_OUTPUT );                // 0x40004080 2 1
 
 	// SSD RESET/VDD/VCC
@@ -81,13 +81,10 @@ __myevic__ void InitGPIO()
 	GPIO_SetMode( PC, GPIO_PIN_PIN4_Msk, GPIO_MODE_OUTPUT );                // 0x40004080 0x10 1
 
 	// SPI0 (Display control)
-//	PE10 = 0;                                                               // 0x40004928
-//	GPIO_SetMode( PE, GPIO_PIN_PIN10_Msk, GPIO_MODE_OUTPUT );               // 0x40004100 (0x400 = 0x40004928 ASR 0x14) 1
-        
-       
+	PE10 = 0;                                                               // 0x40004928
+//	GPIO_SetMode( PE, GPIO_PIN_PIN10_Msk, GPIO_MODE_OUTPUT );               // 0x40004100 (0x400 = 0x40004928 ASR 0x14) 1       
 //	GPIO_SetMode( PE, GPIO_PIN_PIN12_Msk, GPIO_MODE_OUTPUT );               // 0x40004100 (0x1000 = 0x40004930 ASR 0x12) 1
 
-        
 	NVIC_EnableIRQ( GPD_IRQn );                                         // 0x13
 	NVIC_EnableIRQ( GPE_IRQn );                                         // 0x14
 	NVIC_EnableIRQ( GPF_IRQn );                                         // 0x15

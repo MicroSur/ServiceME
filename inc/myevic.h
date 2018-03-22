@@ -90,7 +90,7 @@ typedef struct
 /* 02000000 */	int soft_charge:1;
 /* 04000000 */	int inverse:1;
 /* 08000000 */	int pbank:1;
-/* 10000000 */	int animready:1;
+/* 10000000 */	int vcom:1;
 }
 
 gFlags_t;

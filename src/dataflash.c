@@ -22,7 +22,7 @@ uint8_t ParamsBackup[DATAFLASH_PARAMS_SIZE];
 // Global variables
 
 uint8_t		UpdateDFTimer;
-uint8_t		UpdatePTTimer;
+//uint8_t		UpdatePTTimer;
 uint8_t		DFMagicNumber;
 //uint8_t		X32Off;
 //uint8_t		ScrFlip;
@@ -57,50 +57,6 @@ __myevic__ void ResetToLDROM()
 		;
 }
 
-
-//=========================================================================
-//----- (00002064) --------------------------------------------------------
-__myevic__ void SetProductID()
-{
-	SYS_UnlockReg();
-	FMC_ENABLE_ISP();
-
-	//uint32_t offset;
-	//uint32_t u32Data;
-
-	//for ( offset = 0 ; offset < LDROM_SIZE ; offset += 4 )
-	//{
-		//u32Data = FMC_Read( LDROM_BASE + offset );
-		//u32Data ^= PID_SCRAMBLE;
-                DFMagicNumber = 0xDA; //SME
-                dfProductID = 0x43444948;
-                //char            *BoxName;
-	//}
-        
-        
-	FMC_DISABLE_ISP();
-	SYS_LockReg();
-
-/*
-	if ( offset < LDROM_SIZE )
-	{
-		//dfProductID = u32Data ^ PID_SCRAMBLE;
-
-	//	What's the right behavior in case of bad
-	//	hardware version?
-	//
-	//	if ( HWV2INT(dfMaxHWVersion) < dfHWVersion )
-	//	{
-	//		ResetToLDROM();
-	//	}
-	}
-	else
-	{
-		ResetToLDROM();
-	}
-*/
-
-}
 
 //=========================================================================
 //----- (000018D0) --------------------------------------------------------
@@ -241,9 +197,7 @@ __myevic__ void UpdateDataFlash()
 	uint8_t *df;
 	uint32_t idx;
 
-//	dfAtoRez = AtoRez;
-//	dfAtoStatus = AtoStatus; not used in df
-	UpdateDFTimer = 0;
+	//UpdateDFTimer = 0;
 
 	df = (uint8_t*)&DataFlash.params;
 
@@ -341,14 +295,14 @@ __myevic__ void InitDataFlash()
 	FMC_DISABLE_ISP();
 	SYS_LockReg();
 
-	//FMCReadCounters();
-
-	SetProductID();
+        DFMagicNumber = 0xDA; //SME
+        dfProductID = 0x56524553;
         
         //dfBuild = __BUILD3;
         dfFWVersion	= FWVERSION;
 
 
+/*
 	myprintf( "  APROM Version ......................... [%d.%d%d]\n",
 				FWVERSION / 100,
 				FWVERSION / 10 % 10,
@@ -357,8 +311,10 @@ __myevic__ void InitDataFlash()
 				dfHWVersion / 100,
 				dfHWVersion / 10 % 10,
 				dfHWVersion % 10 );
+*/
 
         
+/*
 	if ( ( dfMagic == DFMagicNumber ) && ( CalcPageCRC( DataFlash.params ) == dfCRC ) )
 	{
                 myprintf( "Data Flash Check Values Validity\n" );
@@ -369,10 +325,8 @@ __myevic__ void InitDataFlash()
 		myprintf( "Data Flash Re-Initialization\n" );
 		//ResetDataFlash();
 	}
+*/
 
-
-//	dfStatus.off = 0;
-	//dfUIVersion = 2;
 
 	MemCpy( ParamsBackup, DataFlash.params, DATAFLASH_PARAMS_SIZE );
 
@@ -380,7 +334,6 @@ __myevic__ void InitDataFlash()
 	{
 		dfBootFlag = 0;
                 UpdateDataFlash();
-		//UpdateDFTimer = 1;
 	}
 }
 

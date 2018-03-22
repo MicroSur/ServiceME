@@ -103,42 +103,6 @@ void InitDevices()
 
 
 //=========================================================================
-//----- (00000C48) --------------------------------------------------------
-__myevic__ void InitHardware()
-{
-/*
-	SYS_UnlockReg();
-
-	//  32.768kHz external crystal
-	if ( dfStatus.x32off )
-	{
-		CLK_DisableXtalRC( CLK_PWRCTL_LXTEN_Msk );
-	}
-	else
-	{
-		SYS->GPF_MFPL &= ~(SYS_GPF_MFPL_PF0MFP_Msk|SYS_GPF_MFPL_PF1MFP_Msk);
-		SYS->GPF_MFPL |=  (SYS_GPF_MFPL_PF0MFP_X32_OUT|SYS_GPF_MFPL_PF1MFP_X32_IN);
-
-		CLK_EnableXtalRC( CLK_PWRCTL_LXTEN_Msk );
-		CLK_WaitClockReady( CLK_STATUS_LXTSTB_Msk );
-	}
-
-	//SetPWMClock();
-
-	SYS_LockReg();
-*/
-
-	//#if (ENABLE_UART)
-	//InitUART0();
-	//#endif
-
-	InitGPIO();
-
-	InitTimers();
-	InitUSB();
-}
-
-//=========================================================================
 // BSOD
 
 __myevic__ void Plantouille( int xpsr, int* stack )
@@ -480,114 +444,6 @@ __myevic__ void DevicesOnOff( int off )
 */
 
 
-
-
-
-/*
-//=========================================================================
-//----- (00005D14) --------------------------------------------------------
-__myevic__ void FlushAndSleep()
-{
-	//#if (ENABLE_UART)
-	//	UART_WAIT_TX_EMPTY( UART0 );
-	//#endif
-
-	if ( !gFlags.light_sleep )
-	{
-		CLK_PowerDown();
-	}
-	else
-	{
-		LightSleep();
-	}
-}
-*/
-
-
-//=========================================================================
-//----- (00004F0C) --------------------------------------------------------
-
-/*
-void GoToSleep()
-{
-	gFlags.light_sleep = !( gFlags.has_x32 || dfStatus.lsloff || gFlags.noclock );
-
-	ScreenOff();
-	LEDOff();
-	gFlags.firing = 0;
-	BatReadTimer = 50;
-	RTCSleep();
-	DevicesOnOff( 1 ); //off
-	CLK_SysTickDelay( 250 );
-	CLK_SysTickDelay( 250 );
-	CLK_SysTickDelay( 250 );
-	if ( dfStatus.off || PE0 || KeyPressTime == 1100 )
-	{
-		SYS_UnlockReg();
-		WDT_Close();
-		FlushAndSleep();
-		PreheatDelay = 0;
-                CurveDelay = 0;
-	}       
-	WDT_Open( WDT_TIMEOUT_2POW14, WDT_RESET_DELAY_18CLK, TRUE, FALSE );
-	SYS_LockReg();
-	gFlags.refresh_battery = 1;
-        
-        if ( dfStatus.invert ) gFlags.inverse = 1;
-                                        
-	DevicesOnOff( 0 ); //on
-	RTCWakeUp();
-	InitDisplay();
-       
-        //if ( !dfStatus.off ) gFlags.asleep = 1;
-}
-*/
-
-
-//=========================================================================
-//----- (0000782C) --------------------------------------------------------
-/*
-__myevic__ void SleepIfIdle()
-{
-	if ( !gFlags.firing && !NoEventTimer )
-	{
-		if ( ( Screen == 0 ) && ( SleepTimer == 0 ) && ( gFlags.user_idle ) )
-		{                  
-			GoToSleep();
-
-			Set_NewRez_dfRez = 2;
-			AtoProbeCount = 0;
-			AtoRezMilli = 0;
-                        PuffsOffCount = 0;
-                        NextPreheatTimer = 0;
-                        AutoPuffTimer = 0;
-                        gFlags.apuff = 0;
-			gFlags.sample_vbat = 1;
-			ReadBatteryVoltage();
-                        
-			if ( dfDimOffMode == 1 || ( ( BatteryVoltage <= BatteryCutOff + 20 ) && !gFlags.usb_attached ) )
-			{
-				dfStatus.off = 1;
-				//Screen = 0;
-                                //LEDOff(); ?
-                                
-			}
-                        else if ( dfDimOffMode == 2 && !dfStatus.off )
-                        {
-                                dfStatus.keylock = 1;
-                        }
-                        
-			gFlags.sample_btemp = 1;
-                        
-                        if ( ISSINFJ200 )
-                            gFlags.sample_atemp = 1;
-		}
-		NoEventTimer = 200;
-	}
-}
-*/
-
-
 //=========================================================================
 // Monitoring
 //-------------------------------------------------------------------------
@@ -672,14 +528,15 @@ __myevic__ void Main()
 {
         //Init
 	InitDevices();
-
-	InitDataFlash();
+        InitDataFlash();
+        InitGPIO();
+	InitTimers();
+        gFlags.vcom = 1; //before init usb
+	InitUSB();
         
-        dfStatus.vcom = 1; //before init usb
-	InitHardware();
 
 	myprintf( "\n\nJoyetech APROM\n" ); // need for identify FW file
-	myprintf( "CPU @ %dHz(PLL@ %dHz)\n", SystemCoreClock, PllClock );
+	//myprintf( "CPU @ %dHz(PLL@ %dHz)\n", SystemCoreClock, PllClock );
 
 	if ( !PD3 )
 	{
@@ -696,7 +553,7 @@ __myevic__ void Main()
 			// 1000Hz
 			gFlags.tick_1khz = 0;
 
-			if ( dfStatus.vcom )
+			if ( gFlags.vcom )
 			{
 				VCOM_Poll();
 			}

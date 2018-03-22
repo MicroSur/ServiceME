@@ -365,7 +365,7 @@ __myevic__ void usbdClassRequest()
 
 	if ( ( token[0] & 0x1F ) == 1 )
 	{
-		if (( dfStatus.vcom ) && ( token[4] == VCOM_INTERFACE ))
+		if (( gFlags.vcom ) && ( token[4] == VCOM_INTERFACE ))
 		{
 			VCOM_ClassRequest( token );
 			return;
@@ -460,7 +460,7 @@ __myevic__ void SetupEndpoints()
 	USBD_SET_PAYLOAD_LEN(EP3, EP3_MAX_PKT_SIZE);
 
 	/*****************************************************/
-	if ( dfStatus.vcom )
+	if ( gFlags.vcom )
 	{
 		/* EP4 ==> Interrupt IN endpoint, address 3 */
 		USBD_CONFIG_EP(EP4, USBD_CFG_EPMODE_IN | VCOM_INT_IN_EP_NUM);
@@ -488,7 +488,7 @@ __myevic__ void InitUSB()
 {
 	USBD_SwReset();
 
-	if ( dfStatus.vcom )
+	if ( gFlags.vcom )
 	{
 		USBD_Open( &usbdVCOMDescriptors, usbdClassRequest+1, 0 );
 	}
@@ -507,7 +507,7 @@ __myevic__ void InitUSB()
 	USBD_Start();
 	NVIC_EnableIRQ( USBD_IRQn );
 
-	if ( dfStatus.vcom )
+	if ( gFlags.vcom )
 	{
 		myputc = VCOM_Putc;
 	}
@@ -526,7 +526,7 @@ __myevic__ void InitUSB()
 #define HID_CMD_LDUPDATE	0x3C
 //#define HID_CMD_FORCE_VCOM	0x42
 //#define HID_CMD_MONITORING	0x43
-#define HID_CMD_AUTO_PUFF	0x44
+//#define HID_CMD_AUTO_PUFF	0x44
 #define HID_CMD_SETPARAMS	0x53    //write df
 //#define HID_CMD_READCONFIG	0x60
 //#define HID_CMD_WRITECONFIG	0x61
@@ -538,7 +538,7 @@ __myevic__ void InitUSB()
 #define HID_CMD_SETLOGO		0xA5
 #define HID_CMD_RESET		0xB4    //restart mod
 #define HID_CMD_FMCREAD		0xC0
-#define HID_CMD_SCREENSHOT	0xC1
+//#define HID_CMD_SCREENSHOT	0xC1
 //#define HID_CMD_APUPDATE	0xC3    //APROM updates from program in LRDOM 
 
 //#define HID_CONFIG_LENGTH	0x400
@@ -635,7 +635,7 @@ __myevic__ void hidSetInReport()
 	switch ( cmd )
 	{
 		case HID_CMD_GETINFO:
-		case HID_CMD_SCREENSHOT:
+		//case HID_CMD_SCREENSHOT:
 		//case HID_CMD_GETPROFILE:
 		{
 			if ( hidDataIndex )
@@ -681,6 +681,7 @@ __myevic__ void hidSetInReport()
 					hidCmd.u32Signature += u32Size;
 				}
 			}
+                        
 			if ( hidDataIndex )
 			{
 				USBD_MemCopy(
@@ -733,7 +734,8 @@ __myevic__ uint32_t hidResetSysCmd( CMD_T *pCmd )
 {
 	myprintf("Reset system command\n");
 
-//	if ( UpdateDFTimer ) UpdateDataFlash();
+	//if ( UpdateDFTimer ) 
+            UpdateDataFlash();
 //	if ( UpdatePTTimer ) UpdatePTCounters();
 
 
@@ -769,23 +771,6 @@ __myevic__ uint32_t hidGetInfoCmd( CMD_T *pCmd )
 
 		dfStruct_t * df = (dfStruct_t*)hidData;
 
-/*
-		if ( dfStatus.nfe )
-		{
-			df->p.Magic = DATAFLASH_NFE_MAGIC;
-			df->n.Build = __BUILD3;
-			uint32_t o = offsetof( dfStruct_t, p.VVRatio );
-			MemClear( &hidData[o], DATAFLASH_PARAMS_SIZE - o );
-			df->p.ShuntRez = 100;
-			df->p.VVRatio = 200;	// PreheatPwr for NFE
-			df->p.DimTimeout = 30;
-
-			LoadCustomBattery();
-			o = offsetof( dfStruct_t, p ) + 0xCA;	// NFE Custom Battery offset
-			MemCpy( &hidData[o], &CustomBattery.V2P, 48 );
-		}
-*/
-
 		df->Checksum = Checksum( (uint8_t *)df->params, FMC_FLASH_PAGE_SIZE - 4 );
 
 		hidInDataPtr = &hidData[u32StartAddr];
@@ -815,64 +800,6 @@ __myevic__ uint32_t hidSetParamCmd( CMD_T *pCmd )
 	return 0;
 }
 
-
-//-------------------------------------------------------------------------
-// Read Configuration
-//-------------------------------------------------------------------------
-/*
-__myevic__ uint32_t hidGetProfile( CMD_T *pCmd )
-{
-	uint32_t u32ProfileNum;
-
-	myprintf( "Get Profile command - Profile: %d\n", pCmd->u32Arg1 );
-
-	u32ProfileNum = pCmd->u32Arg1;
-
-	dfParams_t *p;
-
-	if (( u32ProfileNum == 0 ) || ( u32ProfileNum == dfProfile + 1 ))
-	{
-		dfCRC = CalcPageCRC( DataFlash.params );
-		p = (dfParams_t*)&DataFlash.p;
-	}
-	else
-	{
-		if ( u32ProfileNum > DATAFLASH_PROFILES_MAX )
-		{
-			myprintf( "Invalid profile #.\n" );
-			return 1;
-		}
-
-		p = (dfParams_t*)(DATAFLASH_PROFILES_BASE+DATAFLASH_PARAMS_SIZE*(u32ProfileNum-1));
-	}
-
-	MemCpy( &hidData[0], (uint8_t *)p, DATAFLASH_PARAMS_SIZE );
-	MemCpy( &hidData[DATAFLASH_PARAMS_SIZE], ((uint8_t *)&DataFlash.i), DATAFLASH_INFOS_SIZE );
-
-	dfInfos_t * di = (dfInfos_t*)&hidData[DATAFLASH_PARAMS_SIZE];
-
-	di->Format = HID_PROFILE_FORMAT;
-	di->Build = __BUILD3;
-
-	hidInDataPtr = &hidData[0];
-	hidStartInReport( HID_PROFILE_LENGTH );
-
-	return 0;
-}
-*/
-
-
-//-------------------------------------------------------------------------
-// Read Configuration
-//-------------------------------------------------------------------------
-__myevic__ uint32_t hidSetProfile( CMD_T *pCmd )
-{
-	myprintf( "Set Profile command - Profile: %d\n", pCmd->u32Arg1 );
-	hidDataIndex = 0;
-	return 0;
-}
-
-
 //-------------------------------------------------------------------------
 // Monitoring USB
 //-------------------------------------------------------------------------
@@ -888,7 +815,7 @@ __myevic__ uint32_t hidGetMonData( CMD_T *pCmd )
 
 	if ( u32StartAddr != 0 || u32ParamLen != 0x40 )
 	{
-		myprintf( "Invalid parameters\n" );
+		myprintf( "Invalid parameters: u32StartAddr = %d : u32ParamLen = %d \n", u32StartAddr, u32ParamLen  );
 		return 1;
 	}
        
@@ -971,44 +898,6 @@ __myevic__ uint32_t hidFMCReadCmd( CMD_T *pCmd )
 	return 0;
 }
 
-
-
-/*
-//-------------------------------------------------------------------------
-__myevic__ uint32_t hidScreenshot( CMD_T *pCmd )
-{
-	uint32_t u32StartAddr;
-	uint32_t u32ParamLen;
-
-	u32StartAddr = pCmd->u32Arg1;
-	u32ParamLen = pCmd->u32Arg2;
-
-	//myprintf( "Screenshot command - Start Addr: %d    Param Len: %d\n", pCmd->u32Arg1, pCmd->u32Arg2 );
-
-	if ( u32ParamLen )
-	{
-		if ( u32StartAddr + u32ParamLen > SCREEN_BUFFER_SIZE )
-		{
-			u32ParamLen = SCREEN_BUFFER_SIZE - u32StartAddr;
-		}
-
-		Screen2Bitmap( hidData );
-
-		if ( dfStatus.invert )
-		{
-			for ( int i = 0 ; i < SCREEN_BUFFER_SIZE ; ++i )
-				hidData[i] ^= 0xFF;
-		}
-
-		hidInDataPtr = hidData;
-		hidStartInReport( u32ParamLen );
-	}
-
-	return 0;
-}
-*/
-
-
 //-------------------------------------------------------------------------
 int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 {
@@ -1028,9 +917,7 @@ int32_t hidProcessCommand( uint8_t *pu8Buffer, uint32_t u32BufferLen )
     u32sum = Checksum((uint8_t *)&hidCmd, hidCmd.u8Size);
     if( u32sum != hidCmd.u32Checksum )
         return -1;
-
-    //SleepTimer = 3000; //no sleep while data
-    
+   
     switch( hidCmd.u8Cmd )
     {
 		case HID_CMD_GETINFO:
@@ -1170,22 +1057,25 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 					myprintf( "\tu8UpdateAPRom ......................... [0x%08x]\n",
 								df->p.BootFlag );
 
-					if ( df->p.Magic == DFMagicNumber )
-					{
+                                        myprintf( "df->p.Magic %d \n", df->p.Magic );
+                                        myprintf( "DFMagicNumber %d \n", DFMagicNumber );
+                                        
+					//if ( df->p.Magic == DFMagicNumber )
+					//{
 						MemCpy( DataFlash.params, df->params, DATAFLASH_PARAMS_SIZE );
 
 						//DFCheckValuesValidity();
-						//UpdateDataFlash();
-					}
-					else
-					{
-						myprintf( "Incompatible parameters format.\n" );				
-					}
+						UpdateDataFlash();
+					//}
+					//else
+					//{
+					//	myprintf( "Incompatible parameters format.\n" );				
+					//}
 
 				}
 				else
 				{
-					myprintf( "Sys Param Receive fail.\n" );
+					myprintf( "Sys Param Receive (Checksum) fail.\n" );
 				}
 
 				hidDataIndex = 0;
@@ -1264,7 +1154,7 @@ __myevic__ void hidGetOutReport( uint8_t *pu8Buffer, uint32_t u32BufferLen )
 
 			if ( FMCEraseWritePage( u32Page, (uint32_t*)hidData ) )
 			{
-				myprintf( "LDROM Erase error!\n" );
+				myprintf( "LDROM Erase_Write error!\n" );
 			}
 
 			veo = FMCVerifyPage( u32Page, (uint32_t*)hidData );
@@ -1322,7 +1212,7 @@ __myevic__ void usbdEP3Handler()
 //-------------------------------------------------------------------------
 __myevic__ void usbdEP5Handler()
 {
-	if ( dfStatus.vcom )
+	if ( gFlags.vcom )
 	{
 		VCOM_EP5Handler();
 	}
@@ -1331,7 +1221,7 @@ __myevic__ void usbdEP5Handler()
 //-------------------------------------------------------------------------
 __myevic__ void usbdEP6Handler()
 {
-	if ( dfStatus.vcom )
+	if ( gFlags.vcom )
 	{
 		VCOM_EP6Handler();
 	}

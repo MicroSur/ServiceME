@@ -378,7 +378,7 @@ extern dfStruct_t DataFlash;
 //#define dfJoulesDay		DFP(JoulesDay)
 //#define dfCurveRepeatTimer	DFP(CurveRepeatTimer)
 //#define dfLEDColor		DFP(LEDColor)
-#define dfStatus		DFP(Status)
+//#define dfStatus		DFP(Status)
 //#define dfStatus2		DFP(Status2)
 //#define dfBattLine		DFP(BattLine)  //was dfAtoRez
 //#define dfAutoPuffTimer		DFP(AutoPuffTimer)
@@ -461,11 +461,11 @@ extern dfStruct_t DataFlash;
 //=========================================================================
 // Some globals
 
-extern uint8_t	UpdateDFTimer;
-extern uint8_t	UpdatePTTimer;
+//extern uint8_t	UpdateDFTimer;
+//extern uint8_t	UpdatePTTimer;
 extern uint8_t	DFMagicNumber;
 
-extern uint8_t	ScrFlip;
+//extern uint8_t	ScrFlip;
 
 //=========================================================================
 // Functions
@@ -474,13 +474,13 @@ extern void InitDataFlash();
 extern void ResetDataFlash();
 extern uint32_t CalcPageCRC( uint32_t *pu32Addr );
 extern void UpdateDataFlash();
-extern void DataFlashUpdateTick();
+//extern void DataFlashUpdateTick();
 
 
-extern void SaveProfile();
-extern void EraseProfile( int p );
-extern int  IsProfileValid( int p );
-extern void ApplyParameters();
+//extern void SaveProfile();
+//extern void EraseProfile( int p );
+//extern int  IsProfileValid( int p );
+//extern void ApplyParameters();
 
 //-------------------------------------------------------------------------
 
